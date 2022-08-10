@@ -1,0 +1,129 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qpid
+  namespace: "dev-qpid"
+  labels:
+    app: qpid
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: qpid
+  namespace: "dev-qpid"
+  labels:
+    app: qpid
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: qpid
+  labels:
+    app: qpid
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: qpid
+subjects:
+  - name: qpid
+    namespace: "dev-qpid"
+    kind: ServiceAccount
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qpid
+  namespace: dev-qpid
+  labels:
+    app: qpid
+spec:
+  serviceName: qpid
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qpid
+  template:
+    metadata:
+      labels:
+        app: qpid
+    spec:
+      imagePullSecrets:
+      - name: repository-secret
+      # securityContext:
+      #   fsGroup: 1000
+      serviceAccountName: qpid
+      containers:
+      - name: qpid
+        image: gitlab.ins.risk.regn.net:4567/hcp-enclarity/providerpoint/providerpointbatch/qpid:1.39.0
+        imagePullPolicy: Always
+        # securityContext:
+        #   runAsNonRoot: true
+        #   runAsUser: 1000
+        #   runAsGroup: 1000
+        ports:
+        - containerPort: 5672
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/qpid
+
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command:
+        #         - "sh"
+        #         - "-c"
+        #         - >
+        #           apt-get update;
+        #           apt-get install -y curl;
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - curl -v --silent http://localhost:4040/ 2>&1 | grep $HOSTNAME
+              
+      - name: qpid-le
+        image: "k8s.gcr.io/leader-elector:0.5"
+        args:
+        - --election=qpid
+        - --http=0.0.0.0:4040
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4040
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: default # For Prod managed-premium
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qpid
+  namespace: dev-qpid
+  labels:
+    app: qpid
+spec:
+  clusterIP: None
+  ports:
+  - port: 5672
+  selector:
+    app: qpid

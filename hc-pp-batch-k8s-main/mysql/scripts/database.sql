@@ -1,0 +1,2 @@
+CREATE DATABASE prod32;
+USE prod32;

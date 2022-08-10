@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postproc
+  namespace: dev-cic
+  labels:
+    app: postproc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postproc
+  template:
+    metadata:
+      labels:
+        app: postproc
+    spec:
+      containers:
+      - name: postproc
+        image: gitlab.ins.risk.regn.net:4567/hcp-enclarity/providerpoint/providerpointbatch/postproc:6.7.191
+        imagePullPolicy: Always
+#      imagePullSecrets:
+#      - name: repository-secret
+        env:
+        - name: MYSQL_HOST
+          value: 'mprd.dev-mprd.svc.cluster.local'
+        - name: QPID_HOST
+          value: 'qpid.dev-qpid.svc.cluster.local'
+        - name: POSTPROC_CFG
+          value: '-c /opt/enclarity/prd/6.7/config/master.config'
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi

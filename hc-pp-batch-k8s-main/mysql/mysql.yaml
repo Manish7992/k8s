@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    name: mysql-container
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-container
+  template:
+    metadata:
+      labels:
+        app: mysql-container
+    spec:
+      containers:
+      - name: mysql-container
+        image: c0d3nam3cra2y/mysql:v3
+        imagePullPolicy: Always
+        #command: [cp /nfs/stuff /var/lib/mysql]
+        #args: ["-v", /nfs/stuff:/var/lib/mysql]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "123456"
+        volumeMounts:
+          - name: volume
+            mountPath: /nfs/stuff
+        resources:
+          limits:
+            memory: "300Mi"
+            cpu: "500m"
+        ports:
+          - containerPort: 80
+      volumes:
+        - name: volume
+          persistentVolumeClaim:
+            claimName: nfs
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+      

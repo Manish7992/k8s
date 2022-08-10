@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-mprd
+  namespace: dev-mprd
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadOnlyMany
+  nfs:
+    server: providerpointsa.blob.core.windows.net
+    path: "/providerpointsa/mprd-data"
+  mountOptions:
+    - nolock
+    - vers=3
+    - sec=sys
+    - proto=tcp
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mprd
+  namespace: dev-mprd
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 100Gi
+      

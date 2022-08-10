@@ -1,0 +1,2 @@
+docker run -d --name qpid1 qpid:latest
+

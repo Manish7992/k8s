@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpsource
+  namespace: dev-sourcer
+  labels:
+    app: dpsource
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dpsource
+  template:
+    metadata:
+      labels:
+        app: dpsource
+    spec:
+      containers:
+      - name: dpsource
+        image: gitlab.ins.risk.regn.net:4567/hcp-enclarity/providerpoint/providerpointbatch/dpsource:6.7.191
+        imagePullPolicy: Always
+#      imagePullSecrets:
+#      - name: repository-secret
+        env:
+        - name: MYSQL_HOST
+          value: 'mprd.dev-mprd.svc.cluster.local'
+        - name: QPID_HOST
+          value: 'qpid.dev-qpid.svc.cluster.local'
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi

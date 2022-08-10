@@ -1,0 +1,2 @@
+docker build . --tag qpid:1.39.0
+

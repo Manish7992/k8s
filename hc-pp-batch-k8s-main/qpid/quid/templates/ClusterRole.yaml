@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: qpid
+  namespace: "dev-qpid"
+  labels:
+    app: qpid
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["*"]

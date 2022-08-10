@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    environment {
+        #DEP_FILE = 'nginx.yaml'
+        DEP_FILE = 'qpid.yaml'
+        K8NS = 'dev-pp'
+    }    
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '3')) 
+    }
+    stages {
+        stage ('Initialize') {
+            steps {
+                sh '''
+                    echo "DEP_FILE = ${DEP_FILE}"
+                    echo "K8NS = ${K8NS}"
+                '''
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'echo "Deploying..."'
+
+                withKubeConfig([credentialsId: 'k8s-alpha8-pp-nonprod', serverUrl: 'https://rancher.us-east-1.aws.dev.iog.lnrs.io/k8s/clusters/c-r9n9v']) {
+                    sh '''
+                        kubectl get pods -n ${K8NS}
+                        kubectl apply -f qpid.yaml -n ${K8NS}
+                        kubectl apply -f ${DEP_FILE} -n ${K8NS}
+                        kubectl get pods -n ${K8NS}
+                    '''
+                }
+            }
+        }
+    }    
+    post {
+        always {
+            echo 'Pipeline Completed'
+        }
+        success {
+            echo 'Pipeline run successful'
+        }
+        failure {
+            echo 'Pipeline failed'
+            mail to: 'joseph.kanagaraj@lexisnexisrisk.com',
+                subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                body: "Something is wrong with ${env.BUILD_URL}"            
+        }
+        unstable {
+            echo 'Pipeline unstable'
+        }
+        changed {
+            echo 'Pipeline state has changed'
+        }
+    }
+}

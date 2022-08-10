@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs
+spec:
+  capacity:
+    storage: 1000Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: providerpointsa.blob.core.windows.net
+    path: "/providerpointsa/mprd-data"
+  mountOptions:
+    - nolock
+    - vers=3
+    - sec=sys
+    - proto=tcp
