@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "quid.fullname" . }}
+  name: {{ include "qpid.fullname" . }}
   namespace: dev-qpid
   labels:
-    {{- include "quid.labels" . | nindent 4 }}
+    {{- include "qpid.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   ports:
     - port: {{ .Values.service.port }}
       
   selector:
-    {{- include "quid.selectorLabels" . | nindent 4 }}
+    {{- include "qpid.selectorLabels" . | nindent 4 }}

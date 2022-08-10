@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "quid.fullname" . }}-test-connection"
+  name: "{{ include "qpid.fullname" . }}-test-connection"
   labels:
-    {{- include "quid.labels" . | nindent 4 }}
+    {{- include "qpid.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
 spec:
@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "quid.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "qpid.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

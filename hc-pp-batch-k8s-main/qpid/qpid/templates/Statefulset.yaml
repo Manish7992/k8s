@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "qpid.fullname" . }}
+  namespace: dev-qpid
+  labels:
+    {{- include "qpid.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  serviceName: qpid
+  selector:
+    matchLabels:
+      {{- include "qpid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:     
+      labels:
+        {{- include "qpid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "qpid.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 5672
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/qpid
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl -v --silent http://localhost:4040/ 2>&1 | grep $HOSTNAME
+      - name: {{ .Chart.Name }}-le
+        image: "k8s.gcr.io/leader-elector:0.5"
+        args:
+        - --election=qpid
+        - --http=0.0.0.0:4040
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4040
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: default # For Prod managed-premium
+      resources:
+        requests:
+          storage: 20Gi
